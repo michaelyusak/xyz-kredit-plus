@@ -36,7 +36,7 @@ func (r *refreshTokenRepositoryMysql) InsertToken(ctx context.Context, token str
 
 	_, err := r.dbtx.ExecContext(ctx, q, token, accountId, nowUnixMilli())
 	if err != nil {
-		return err
+		return fmt.Errorf("[mysql_refresh_token_repository][InsertToken][ExecContext] error: %w", err)
 	}
 
 	return nil

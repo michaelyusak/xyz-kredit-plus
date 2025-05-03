@@ -60,16 +60,21 @@ func (r *accountRepositoryMysql) GetAccountByEmail(ctx context.Context, email st
 	return &account, nil
 }
 
-func (r *accountRepositoryMysql) InsertAccount(ctx context.Context, account entity.Account) error {
+func (r *accountRepositoryMysql) InsertAccount(ctx context.Context, account entity.Account) (int64, error) {
 	q := `
 		INSERT INTO accounts (email, password, created_at, updated_at)
 		VALUES ($1, $2, $3, $3)
 	`
 
-	_, err := r.dbtx.ExecContext(ctx, q, account.Email, account.Password, nowUnixMilli())
+	res, err := r.dbtx.ExecContext(ctx, q, account.Email, account.Password, nowUnixMilli())
 	if err != nil {
-		return err
+		return 0, fmt.Errorf("[mysql_account_repository][InsertAccount][ExecContext] error: %w | email: %s", err, account.Email)
 	}
 
-	return nil
+	accountId, err := res.LastInsertId()
+	if err != nil {
+		return 0, fmt.Errorf("[mysql_account_repository][InsertAccount][LastInsertId] error: %w | email: %s", err, account.Email)
+	}
+
+	return accountId, nil
 }

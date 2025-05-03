@@ -10,6 +10,8 @@ type Transaction interface {
 	Rollback() error
 	Commit() error
 	AccountMysqlTx() *accountRepositoryMysql
+	ConsumerMysqlTx() *consumerRepositoryMysql
+	RefreshTokenMysqlTx() *refreshTokenRepositoryMysql
 }
 
 type sqlTransaction struct {
@@ -44,6 +46,18 @@ func (s *sqlTransaction) Commit() error {
 
 func (s *sqlTransaction) AccountMysqlTx() *accountRepositoryMysql {
 	return &accountRepositoryMysql{
+		dbtx: s.tx,
+	}
+}
+
+func (s *sqlTransaction) ConsumerMysqlTx() *consumerRepositoryMysql {
+	return &consumerRepositoryMysql{
+		dbtx: s.tx,
+	}
+}
+
+func (s *sqlTransaction) RefreshTokenMysqlTx() *refreshTokenRepositoryMysql {
+	return &refreshTokenRepositoryMysql{
 		dbtx: s.tx,
 	}
 }
