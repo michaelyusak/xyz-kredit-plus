@@ -8,7 +8,7 @@ CREATE TABLE accounts (
     created_at BIGINT NOT NULL,
     updated_at BIGINT NOT NULL,
     deleted_at BIGINT DEFAULT NULL,
-    INDEX idx_email (email)
+    INDEX idx_account_email (email)
 );
 
 CREATE TABLE consuments (
@@ -24,6 +24,16 @@ CREATE TABLE consuments (
     created_at BIGINT NOT NULL,
     updated_at BIGINT NOT NULL,
     deleted_at BIGINT DEFAULT NULL,
-    INDEX idx_identity_number (identity_number),
-    INDEX idx_full_name (full_name)
+    INDEX idx_consument_identity_number (identity_number),
+    INDEX idx_consument_full_name (full_name)
+);
+
+CREATE TABLE refresh_tokens (
+    refresh_token_id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    refresh_token VARCHAR(255) NOT NULL DEFAULT '',
+    account_id BIGINT NOT NULL,
+    expired_at BIGINT NOT NULL,
+    created_at BIGINT NOT NULL,
+    updated_at BIGINT NOT NULL,
+    INDEX idx_refresh_token (refresh_token)
 );
