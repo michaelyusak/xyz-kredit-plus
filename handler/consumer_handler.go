@@ -11,6 +11,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/michaelyusak/go-helper/apperror"
 	hHelper "github.com/michaelyusak/go-helper/helper"
+	"github.com/michaelyusak/xyz-kredit-plus/appconstant"
 	"github.com/michaelyusak/xyz-kredit-plus/entity"
 	"github.com/michaelyusak/xyz-kredit-plus/service"
 )
@@ -34,6 +35,15 @@ func NewConsumerHandler(consumerService service.ConsumerService, ctxTimeout time
 func (h *ConsumerHandler) ProcessKyc(ctx *gin.Context) {
 	ctx.Header("Content-Type", "application/json")
 
+	accountId, ok := ctx.Value(appconstant.AccountIdCtxKey).(int64)
+	if !ok {
+		ctx.Error(apperror.NewAppError(apperror.AppErrorOpt{
+			Code:            http.StatusUnauthorized,
+			ResponseMessage: http.StatusText(http.StatusUnauthorized),
+		}))
+		return
+	}
+
 	var consumerData entity.Consumer
 
 	data := ctx.Request.FormValue("data")
@@ -56,30 +66,36 @@ func (h *ConsumerHandler) ProcessKyc(ctx *gin.Context) {
 		return
 	}
 
+	consumerData.AccountId = accountId
+
 	identityCardPhotoFile, _, err := ctx.Request.FormFile("identity_card_photo")
 	if err != nil {
-		if errors.Is(err, http.ErrMissingFile) && consumerData.IdentityCardPhoto.Base64 == "" {
+		if !errors.Is(err, http.ErrMissingFile) {
+			ctx.Error(err)
+			return
+		}
+
+		if consumerData.IdentityCardPhoto.Base64 == "" {
 			ctx.Error(apperror.BadRequestError(apperror.AppErrorOpt{
 				ResponseMessage: "identity card photo is required",
 			}))
 			return
 		}
-
-		ctx.Error(err)
-		return
 	}
 
 	selfiePhotoFile, _, err := ctx.Request.FormFile("selfie_photo")
 	if err != nil {
-		if errors.Is(err, http.ErrMissingFile) && consumerData.SelfiePhoto.Base64 == "" {
+		if !errors.Is(err, http.ErrMissingFile) {
+			ctx.Error(err)
+			return
+		}
+
+		if consumerData.SelfiePhoto.Base64 == "" {
 			ctx.Error(apperror.BadRequestError(apperror.AppErrorOpt{
 				ResponseMessage: "selfie photo is required",
 			}))
 			return
 		}
-
-		ctx.Error(err)
-		return
 	}
 
 	consumerData.IdentityCardPhoto.File = identityCardPhotoFile

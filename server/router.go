@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	hAdaptor "github.com/michaelyusak/go-helper/adaptor"
 	hHandler "github.com/michaelyusak/go-helper/handler"
 	hHelper "github.com/michaelyusak/go-helper/helper"
@@ -39,7 +40,7 @@ func createRouter(config config.ServiceConfig, log *logrus.Logger) *gin.Engine {
 	mediaRepo := repository.NewMediaRepositoryLocal(config.LocalMediaStorage.Path)
 
 	hash := hHelper.NewHashHelper(config.Hash)
-	jwt := hHelper.NewJWTHelper(config.Jwt)
+	jwt := hHelper.NewJWTHelper(config.Jwt, jwt.SigningMethodHS512)
 
 	accountService := service.NewAccountService(transaction, hash, jwt, accountRepo, consumerRepo, RefreshTokenRepo)
 	consumerService := service.NewConsumerService(transaction, consumerRepo, mediaRepo)
