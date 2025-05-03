@@ -2,7 +2,9 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/michaelyusak/go-helper/apperror"
 	hHelper "github.com/michaelyusak/go-helper/helper"
@@ -12,34 +14,79 @@ import (
 )
 
 type accountServiceImpl struct {
-	transaction repository.Transaction
-	hash        hHelper.HashHelper
-	accountRepo repository.AccountRepository
+	transaction      repository.Transaction
+	hash             hHelper.HashHelper
+	jwt              hHelper.JWTHelper
+	accountRepo      repository.AccountRepository
+	consumerRepo     repository.ConsumerRepository
+	refreshTokenRepo repository.RefreshTokenRepository
 }
 
-func NewAccountService(transaction repository.Transaction, hash hHelper.HashHelper, accountRepo repository.AccountRepository) *accountServiceImpl {
+func NewAccountService(transaction repository.Transaction, hash hHelper.HashHelper, jwt hHelper.JWTHelper, accountRepo repository.AccountRepository, consumerRepo repository.ConsumerRepository, refreshTokenRepo repository.RefreshTokenRepository) *accountServiceImpl {
 	return &accountServiceImpl{
-		transaction: transaction,
-		hash:        hash,
-		accountRepo: accountRepo,
+		transaction:      transaction,
+		hash:             hash,
+		jwt:              jwt,
+		accountRepo:      accountRepo,
+		consumerRepo:     consumerRepo,
+		refreshTokenRepo: refreshTokenRepo,
 	}
 }
 
-func (s *accountServiceImpl) RegisterAccount(ctx context.Context, newAccount entity.Account) error {
+func (s *accountServiceImpl) generateJwt(ctx context.Context, account entity.Account, isKycCompleted bool) (*entity.TokenData, error) {
+	customClaims := make(map[string]any)
+	customClaims["account_id"] = account.Id
+	customClaims["email"] = account.Email
+	customClaims["is_kyc_completed"] = isKycCompleted
+
+	claimsBytes, err := json.Marshal(customClaims)
+	if err != nil {
+		return nil, fmt.Errorf("[account_service][generateJwt][json.Marshal] Error: %w", err)
+	}
+
+	accessTokenExpiredAt := time.Now().Add(time.Hour).UnixMilli()
+
+	accessToken, err := s.jwt.CreateAndSign(claimsBytes, accessTokenExpiredAt)
+	if err != nil {
+		return nil, fmt.Errorf("[account_service][generateJwt][jwt.CreateAndSign][accessToken] Error: %w", err)
+	}
+
+	refreshTokenExpiredAt := time.Now().Add(24 * time.Hour).UnixMilli()
+
+	refreshToken, err := s.jwt.CreateAndSign(claimsBytes, refreshTokenExpiredAt)
+	if err != nil {
+		return nil, fmt.Errorf("[account_service][generateJwt][jwt.CreateAndSign][refreshToken] Error: %w", err)
+	}
+
+	return &entity.TokenData{
+		AccessToken: entity.Token{
+			Token:     accessToken,
+			ExpiredAt: accessTokenExpiredAt,
+		},
+		RefreshToken: entity.Token{
+			Token:     refreshToken,
+			ExpiredAt: refreshTokenExpiredAt,
+		},
+	}, nil
+}
+
+func (s *accountServiceImpl) RegisterAccount(ctx context.Context, newAccount entity.Account) (*entity.TokenData, error) {
 	if !helper.ValidatePassword(newAccount.Password) {
-		return apperror.BadRequestError(apperror.AppErrorOpt{
+		return nil, apperror.BadRequestError(apperror.AppErrorOpt{
 			ResponseMessage: "invalid password",
 		})
 	}
 
 	err := s.transaction.Begin()
 	if err != nil {
-		return apperror.InternalServerError(apperror.AppErrorOpt{
+		return nil, apperror.InternalServerError(apperror.AppErrorOpt{
 			Message: fmt.Sprintf("[account_service][RegisterAccount][transaction.Begin] Error: %s", err.Error()),
 		})
 	}
 
 	accountRepo := s.transaction.AccountMysqlTx()
+	consumerRepo := s.transaction.ConsumerMysqlTx()
+	refreshTokenRepo := s.transaction.RefreshTokenMysqlTx()
 
 	defer func() {
 		if err != nil {
@@ -51,19 +98,33 @@ func (s *accountServiceImpl) RegisterAccount(ctx context.Context, newAccount ent
 
 	err = accountRepo.Lock(ctx)
 	if err != nil {
-		return apperror.InternalServerError(apperror.AppErrorOpt{
+		return nil, apperror.InternalServerError(apperror.AppErrorOpt{
 			Message: fmt.Sprintf("[account_service][RegisterAccount][accountRepo.Lock] Error: %s", err.Error()),
+		})
+	}
+
+	err = consumerRepo.Lock(ctx)
+	if err != nil {
+		return nil, apperror.InternalServerError(apperror.AppErrorOpt{
+			Message: fmt.Sprintf("[account_service][RegisterAccount][consumerRepo.Lock] Error: %s", err.Error()),
+		})
+	}
+
+	err = refreshTokenRepo.Lock(ctx)
+	if err != nil {
+		return nil, apperror.InternalServerError(apperror.AppErrorOpt{
+			Message: fmt.Sprintf("[account_service][RegisterAccount][refreshTokenRepo.Lock] Error: %s", err.Error()),
 		})
 	}
 
 	existing, err := accountRepo.GetAccountByEmail(ctx, newAccount.Email)
 	if err != nil {
-		return apperror.InternalServerError(apperror.AppErrorOpt{
+		return nil, apperror.InternalServerError(apperror.AppErrorOpt{
 			Message: fmt.Sprintf("[account_service][RegisterAccount][accountRepo.GetAccountByEmail] Error: %s", err.Error()),
 		})
 	}
 	if existing != nil {
-		return apperror.BadRequestError(apperror.AppErrorOpt{
+		return nil, apperror.BadRequestError(apperror.AppErrorOpt{
 			Message:         "[account_service][Register] email already registered",
 			ResponseMessage: "email already registered",
 		})
@@ -71,19 +132,41 @@ func (s *accountServiceImpl) RegisterAccount(ctx context.Context, newAccount ent
 
 	hashed, err := s.hash.Hash(newAccount.Password)
 	if err != nil {
-		return apperror.InternalServerError(apperror.AppErrorOpt{
+		return nil, apperror.InternalServerError(apperror.AppErrorOpt{
 			Message: fmt.Sprintf("[account_service][RegisterAccount][hash.Hash] Error: %s", err.Error()),
 		})
 	}
 
 	newAccount.Password = hashed
 
-	err = accountRepo.InsertAccount(ctx, newAccount)
+	accountId, err := accountRepo.InsertAccount(ctx, newAccount)
 	if err != nil {
-		return apperror.InternalServerError(apperror.AppErrorOpt{
+		return nil, apperror.InternalServerError(apperror.AppErrorOpt{
 			Message: fmt.Sprintf("[account_service][RegisterAccount][accountRepo.InsertAccount] Error: %s", err.Error()),
 		})
 	}
 
-	return nil
+	newAccount.Id = accountId
+
+	existingConsumer, err := consumerRepo.GetConsumetByAccountId(ctx, newAccount.Id)
+	if err != nil {
+		return nil, apperror.InternalServerError(apperror.AppErrorOpt{
+			Message: fmt.Sprintf("[account_service][RegisterAccount][consumerRepo.GetConsumetByAccountId] Error: %s", err.Error()),
+		})
+	}
+
+	isKycCompleted := false
+
+	if existingConsumer != nil {
+		isKycCompleted = true
+	}
+
+	token, err := s.generateJwt(ctx, newAccount, isKycCompleted)
+	if err != nil {
+		return nil, apperror.InternalServerError(apperror.AppErrorOpt{
+			Message: fmt.Sprintf("[account_service][RegisterAccount][generateJwt] Error: %s", err.Error()),
+		})
+	}
+
+	return token, nil
 }

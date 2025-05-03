@@ -6,5 +6,5 @@ type Account struct {
 	Password  string `json:"password" binding:"required"`
 	CreatedAt int64  `json:"created_at"`
 	UpdatedAt int64  `json:"-"`
-	DeletedAt int64  `json:"-"`
+	DeletedAt *int64  `json:"-"`
 }
