@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/michaelyusak/xyz-kredit-plus/entity"
 )
@@ -19,21 +20,10 @@ func NewConsumerRepositoryMysql(dbtx DBTX) *consumerRepositoryMysql {
 	}
 }
 
-func (r *consumerRepositoryMysql) Lock(ctx context.Context) error {
-	q := `
-		LOCK TABLE consumers WRITE
-	`
+func (r *consumerRepositoryMysql) GetConsumerByAccountId(ctx context.Context, accountId int64, forUpdate bool) (*entity.Consumer, error) {
+	var sb strings.Builder
 
-	_, err := r.dbtx.ExecContext(ctx, q)
-	if err != nil {
-		return fmt.Errorf("[mysql_consumer_repository][Lock][ExecContext] error: %w", err)
-	}
-
-	return nil
-}
-
-func (r *consumerRepositoryMysql) GetConsumetByAccountId(ctx context.Context, accountId int64) (*entity.Consumer, error) {
-	q := `
+	sb.WriteString(`
 		SELECT 
 			consumer_id, 
 			account_id, 
@@ -48,10 +38,16 @@ func (r *consumerRepositoryMysql) GetConsumetByAccountId(ctx context.Context, ac
 			created_at, 
 			updated_at, 
 			deleted_at
-		FROM users
-		WHERE account_id = $1
-		 	AND deleted_at IS NULL;
-	`
+		FROM consumers
+		WHERE account_id = ?
+		 	AND deleted_at IS NULL
+	`)
+
+	if forUpdate {
+		sb.WriteString(`FOR UPDATE`)
+	}
+
+	q := sb.String()
 
 	var consumer entity.Consumer
 

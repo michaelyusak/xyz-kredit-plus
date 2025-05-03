@@ -15,17 +15,14 @@ type DBTX interface {
 }
 
 type AccountRepository interface {
-	Lock(ctx context.Context) error
-	GetAccountByEmail(ctx context.Context, email string) (*entity.Account, error)
+	GetAccountByEmail(ctx context.Context, email string, forUpdate bool) (*entity.Account, error)
 	InsertAccount(ctx context.Context, account entity.Account) (int64, error)
 }
 
 type RefreshTokenRepository interface {
-	Lock(ctx context.Context) error
-	InsertToken(ctx context.Context, token string, accountId int64) error
+	InsertToken(ctx context.Context, token string, accountId, expiredAt int64) error
 }
 
 type ConsumerRepository interface {
-	Lock(ctx context.Context) error
-	GetConsumetByAccountId(ctx context.Context, accountId int64) (*entity.Consumer, error)
+	GetConsumerByAccountId(ctx context.Context, accountId int64, forUpdate bool) (*entity.Consumer, error)
 }

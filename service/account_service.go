@@ -33,7 +33,7 @@ func NewAccountService(transaction repository.Transaction, hash hHelper.HashHelp
 	}
 }
 
-func (s *accountServiceImpl) generateJwt(ctx context.Context, account entity.Account, isKycCompleted bool) (*entity.TokenData, error) {
+func (s *accountServiceImpl) generateJwt(account entity.Account, isKycCompleted bool) (*entity.TokenData, error) {
 	customClaims := make(map[string]any)
 	customClaims["account_id"] = account.Id
 	customClaims["email"] = account.Email
@@ -96,28 +96,7 @@ func (s *accountServiceImpl) RegisterAccount(ctx context.Context, newAccount ent
 		s.transaction.Commit()
 	}()
 
-	err = accountRepo.Lock(ctx)
-	if err != nil {
-		return nil, apperror.InternalServerError(apperror.AppErrorOpt{
-			Message: fmt.Sprintf("[account_service][RegisterAccount][accountRepo.Lock] Error: %s", err.Error()),
-		})
-	}
-
-	err = consumerRepo.Lock(ctx)
-	if err != nil {
-		return nil, apperror.InternalServerError(apperror.AppErrorOpt{
-			Message: fmt.Sprintf("[account_service][RegisterAccount][consumerRepo.Lock] Error: %s", err.Error()),
-		})
-	}
-
-	err = refreshTokenRepo.Lock(ctx)
-	if err != nil {
-		return nil, apperror.InternalServerError(apperror.AppErrorOpt{
-			Message: fmt.Sprintf("[account_service][RegisterAccount][refreshTokenRepo.Lock] Error: %s", err.Error()),
-		})
-	}
-
-	existing, err := accountRepo.GetAccountByEmail(ctx, newAccount.Email)
+	existing, err := accountRepo.GetAccountByEmail(ctx, newAccount.Email, true)
 	if err != nil {
 		return nil, apperror.InternalServerError(apperror.AppErrorOpt{
 			Message: fmt.Sprintf("[account_service][RegisterAccount][accountRepo.GetAccountByEmail] Error: %s", err.Error()),
@@ -148,7 +127,7 @@ func (s *accountServiceImpl) RegisterAccount(ctx context.Context, newAccount ent
 
 	newAccount.Id = accountId
 
-	existingConsumer, err := consumerRepo.GetConsumetByAccountId(ctx, newAccount.Id)
+	existingConsumer, err := consumerRepo.GetConsumerByAccountId(ctx, newAccount.Id, false)
 	if err != nil {
 		return nil, apperror.InternalServerError(apperror.AppErrorOpt{
 			Message: fmt.Sprintf("[account_service][RegisterAccount][consumerRepo.GetConsumetByAccountId] Error: %s", err.Error()),
@@ -161,10 +140,17 @@ func (s *accountServiceImpl) RegisterAccount(ctx context.Context, newAccount ent
 		isKycCompleted = true
 	}
 
-	token, err := s.generateJwt(ctx, newAccount, isKycCompleted)
+	token, err := s.generateJwt(newAccount, isKycCompleted)
 	if err != nil {
 		return nil, apperror.InternalServerError(apperror.AppErrorOpt{
 			Message: fmt.Sprintf("[account_service][RegisterAccount][generateJwt] Error: %s", err.Error()),
+		})
+	}
+
+	err = refreshTokenRepo.InsertToken(ctx, token.RefreshToken.Token, newAccount.Id, token.RefreshToken.ExpiredAt)
+	if err != nil {
+		return nil, apperror.InternalServerError(apperror.AppErrorOpt{
+			Message: fmt.Sprintf("[account_service][RegisterAccount][refreshTokenRepo.InsertToken] Error: %s", err.Error()),
 		})
 	}
 

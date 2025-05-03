@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/michaelyusak/xyz-kredit-plus/entity"
 )
@@ -19,25 +20,21 @@ func NewAccountRepositoryMysql(dbtx DBTX) *accountRepositoryMysql {
 	}
 }
 
-func (r *accountRepositoryMysql) Lock(ctx context.Context) error {
-	q := `
-		LOCK TABLE accounts WRITE
-	`
+func (r *accountRepositoryMysql) GetAccountByEmail(ctx context.Context, email string, forUpdate bool) (*entity.Account, error) {
+	var sb strings.Builder
 
-	_, err := r.dbtx.ExecContext(ctx, q)
-	if err != nil {
-		return fmt.Errorf("[mysql_account_repository][Lock][ExecContext] error: %w", err)
+	sb.WriteString(`
+		SELECT account_id, email, password, created_at, updated_at, deleted_at
+		FROM accounts
+		WHERE email = ?
+			AND deleted_at IS NULL
+	`)
+
+	if forUpdate {
+		sb.WriteString(`FOR UPDATE`)
 	}
 
-	return nil
-}
-
-func (r *accountRepositoryMysql) GetAccountByEmail(ctx context.Context, email string) (*entity.Account, error) {
-	q := `
-		SELECT account_id, email, password, created_at, updated_at, deleted_at
-		WHERE email = $1
-			AND deleted_at IS NULL
-	`
+	q := sb.String()
 
 	var account entity.Account
 
@@ -61,12 +58,18 @@ func (r *accountRepositoryMysql) GetAccountByEmail(ctx context.Context, email st
 }
 
 func (r *accountRepositoryMysql) InsertAccount(ctx context.Context, account entity.Account) (int64, error) {
-	q := `
+	var sb strings.Builder
+	
+	sb.WriteString(`
 		INSERT INTO accounts (email, password, created_at, updated_at)
-		VALUES ($1, $2, $3, $3)
-	`
+		VALUES (?, ?, ?, ?)
+	`)
 
-	res, err := r.dbtx.ExecContext(ctx, q, account.Email, account.Password, nowUnixMilli())
+	q := sb.String()
+	
+	now := nowUnixMilli()
+
+	res, err := r.dbtx.ExecContext(ctx, q, account.Email, account.Password, now, now)
 	if err != nil {
 		return 0, fmt.Errorf("[mysql_account_repository][InsertAccount][ExecContext] error: %w | email: %s", err, account.Email)
 	}

@@ -32,7 +32,7 @@ CREATE TABLE consumers (
 
 CREATE TABLE refresh_tokens (
     refresh_token_id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    refresh_token VARCHAR(255) NOT NULL DEFAULT '',
+    refresh_token VARCHAR(500) NOT NULL DEFAULT '',
     account_id BIGINT NOT NULL,
     expired_at BIGINT NOT NULL,
     created_at BIGINT NOT NULL,

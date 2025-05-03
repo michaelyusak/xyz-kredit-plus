@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"strings"
 )
 
 type refreshTokenRepositoryMysql struct {
@@ -15,26 +16,19 @@ func NewRefreshTokenRepositoryMysql(dbtx DBTX) *refreshTokenRepositoryMysql {
 	}
 }
 
-func (r *refreshTokenRepositoryMysql) Lock(ctx context.Context) error {
-	q := `
-		LOCK TABLE refresh_tokens WRITE
-	`
+func (r *refreshTokenRepositoryMysql) InsertToken(ctx context.Context, token string, accountId, expiredAt int64) error {
+	var sb strings.Builder
+	
+	sb.WriteString(`
+		INSERT INTO refresh_tokens (refresh_token, account_id, expired_at, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?)
+	`)
 
-	_, err := r.dbtx.ExecContext(ctx, q)
-	if err != nil {
-		return fmt.Errorf("[mysql_refresh_token_repository][Lock][ExecContext] error: %w", err)
-	}
+	q := sb.String()
 
-	return nil
-}
+	now := nowUnixMilli()
 
-func (r *refreshTokenRepositoryMysql) InsertToken(ctx context.Context, token string, accountId int64) error {
-	q := `
-	INSERT INTO refresh_tokens (refresh_token, account_id, created_at, updated_at)
-	VALUES ($1, $2, $3, $3)
-`
-
-	_, err := r.dbtx.ExecContext(ctx, q, token, accountId, nowUnixMilli())
+	_, err := r.dbtx.ExecContext(ctx, q, token, accountId, expiredAt, now, now)
 	if err != nil {
 		return fmt.Errorf("[mysql_refresh_token_repository][InsertToken][ExecContext] error: %w", err)
 	}
