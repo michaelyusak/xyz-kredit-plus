@@ -35,10 +35,11 @@ func NewAccountService(transaction repository.Transaction, hash hHelper.HashHelp
 }
 
 func (s *accountServiceImpl) generateJwt(account entity.Account, isKycCompleted bool) (*entity.TokenData, error) {
-	customClaims := make(map[string]any)
-	customClaims["account_id"] = account.Id
-	customClaims["email"] = account.Email
-	customClaims["is_kyc_completed"] = isKycCompleted
+	customClaims := entity.JwtClaims{
+		AccountId:      account.Id,
+		Email:          account.Email,
+		IsKycCompleted: isKycCompleted,
+	}
 
 	claimsBytes, err := json.Marshal(customClaims)
 	if err != nil {
@@ -172,7 +173,6 @@ func (s *accountServiceImpl) Login(ctx context.Context, account entity.Account) 
 			ResponseMessage: "email not registered",
 		})
 	}
-
 	isValid, err := s.hash.Check(account.Password, []byte(existing.Password))
 	if err != nil {
 		return nil, apperror.InternalServerError(apperror.AppErrorOpt{
@@ -187,7 +187,9 @@ func (s *accountServiceImpl) Login(ctx context.Context, account entity.Account) 
 		})
 	}
 
-	existingConsumer, err := s.consumerRepo.GetConsumerByAccountId(ctx, existing.Id, false)
+	account = *existing
+
+	existingConsumer, err := s.consumerRepo.GetConsumerByAccountId(ctx, account.Id, false)
 	if err != nil {
 		return nil, apperror.InternalServerError(apperror.AppErrorOpt{
 			Message: fmt.Sprintf("[account_service][Login][consumerRepo.GetConsumerByAccountId] Error: %s | account_id: %v", err.Error(), existing.Id),
