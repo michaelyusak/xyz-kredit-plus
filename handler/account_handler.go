@@ -48,3 +48,26 @@ func (h *AccountHandler) Register(ctx *gin.Context) {
 
 	helper.ResponseOK(ctx, *token)
 }
+
+func (h *AccountHandler) Login(ctx *gin.Context) {
+	ctx.Header("Content-Type", "application/json")
+
+	var req entity.Account
+
+	err := ctx.ShouldBind(&req)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	ctxWithTimeout, cancel := context.WithTimeout(ctx.Request.Context(), h.ctxTimeout)
+	defer cancel()
+
+	token, err := h.accountService.Login(ctxWithTimeout, req)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+
+	helper.ResponseOK(ctx, *token)
+}

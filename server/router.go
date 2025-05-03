@@ -91,4 +91,5 @@ func accountRouting(router *gin.Engine, account *handler.AccountHandler) {
 	accountRouter := router.Group("/v1/account")
 
 	accountRouter.POST("/register", account.Register)
+	accountRouter.POST("/login", account.Login)
 }
