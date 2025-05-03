@@ -5,7 +5,7 @@
     "allowed_origins": [
         "http://localhost:5173"
     ],
-    "postgres": {
+    "mysql": {
         "username": "root",
         "password": "password",
         "host": "127.0.0.1",
