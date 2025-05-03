@@ -13,7 +13,7 @@ import (
 	"github.com/michaelyusak/xyz-kredit-plus/entity"
 )
 
-func AuthMiddleware(jwtHelper hHelper.JWTHelper, allowKycNotCompleted bool) gin.HandlerFunc {
+func AuthMiddleware(jwtHelper hHelper.JWTHelper) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.Request.Header.Get(hAppconstant.Authorization)
 		t := strings.Split(authHeader, " ")
@@ -47,14 +47,22 @@ func AuthMiddleware(jwtHelper hHelper.JWTHelper, allowKycNotCompleted bool) gin.
 			return
 		}
 
-		if !allowKycNotCompleted && !claims.IsKycCompleted {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, hDto.ErrorResponse{Message: hAppconstant.MsgUnauthorized})
-			return
-		}
-
 		c.Set(appconstant.AccountIdCtxKey, claims.AccountId)
 		c.Set(appconstant.EmailCtxKey, claims.Email)
 		c.Set(appconstant.IsKycCompletedCtxKey, claims.AccountId)
+
+		c.Next()
+	}
+}
+
+func KycFilter() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		isKycCompleted := c.Value(appconstant.IsKycCompletedCtxKey).(bool)
+
+		if !isKycCompleted {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, hDto.ErrorResponse{Message: hAppconstant.MsgUnauthorized})
+			return
+		}
 
 		c.Next()
 	}
