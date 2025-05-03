@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/michaelyusak/go-helper/apperror"
@@ -151,6 +152,58 @@ func (s *accountServiceImpl) RegisterAccount(ctx context.Context, newAccount ent
 	if err != nil {
 		return nil, apperror.InternalServerError(apperror.AppErrorOpt{
 			Message: fmt.Sprintf("[account_service][RegisterAccount][refreshTokenRepo.InsertToken] Error: %s", err.Error()),
+		})
+	}
+
+	return token, nil
+}
+
+func (s *accountServiceImpl) Login(ctx context.Context, account entity.Account) (*entity.TokenData, error) {
+	existing, err := s.accountRepo.GetAccountByEmail(ctx, account.Email, false)
+	if err != nil {
+		return nil, apperror.InternalServerError(apperror.AppErrorOpt{
+			Message: fmt.Sprintf("[account_service][Login][accountRepo.GetAccountByEmail] Error: %s | email: %s", err.Error(), account.Email),
+		})
+	}
+	if existing == nil {
+		return nil, apperror.NewAppError(apperror.AppErrorOpt{
+			Code:            http.StatusUnauthorized,
+			Message:         "[account_service][Login] email not registered",
+			ResponseMessage: "email not registered",
+		})
+	}
+
+	isValid, err := s.hash.Check(account.Password, []byte(existing.Password))
+	if err != nil {
+		return nil, apperror.InternalServerError(apperror.AppErrorOpt{
+			Message: fmt.Sprintf("[account_service][Login][hash.Check] Error: %s | email: %s", err.Error(), account.Email),
+		})
+	}
+	if !isValid {
+		return nil, apperror.NewAppError(apperror.AppErrorOpt{
+			Code:            http.StatusUnauthorized,
+			Message:         "[account_service][Login] invalid credentials",
+			ResponseMessage: "invalid credentials",
+		})
+	}
+
+	existingConsumer, err := s.consumerRepo.GetConsumerByAccountId(ctx, existing.Id, false)
+	if err != nil {
+		return nil, apperror.InternalServerError(apperror.AppErrorOpt{
+			Message: fmt.Sprintf("[account_service][Login][consumerRepo.GetConsumerByAccountId] Error: %s | account_id: %v", err.Error(), existing.Id),
+		})
+	}
+
+	isKycCompleted := false
+
+	if existingConsumer != nil {
+		isKycCompleted = true
+	}
+
+	token, err := s.generateJwt(account, isKycCompleted)
+	if err != nil {
+		return nil, apperror.InternalServerError(apperror.AppErrorOpt{
+			Message: fmt.Sprintf("[account_service][Login][generateJwt] Error: %s | account_id: %v", err.Error(), existing.Id),
 		})
 	}
 
