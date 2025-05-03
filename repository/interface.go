@@ -19,3 +19,8 @@ type AccountRepository interface {
 	GetAccountByEmail(ctx context.Context, email string) (*entity.Account, error)
 	InsertAccount(ctx context.Context, account entity.Account) error
 }
+
+type RefreshTokenRepository interface {
+	Lock (ctx context.Context) error
+	InsertToken(ctx context.Context, token string, accountId int64) (error)
+}
