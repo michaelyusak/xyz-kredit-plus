@@ -6,21 +6,18 @@ import (
 	"os"
 
 	"github.com/michaelyusak/go-helper/entity"
+	"github.com/michaelyusak/go-helper/helper"
 	"github.com/sirupsen/logrus"
 )
 
-type JwtConfig struct {
-	Issuer string `json:"issuer"`
-	Key    string `json:"key"`
-}
-
 type ServiceConfig struct {
-	Port           string          `json:"port"`
-	GracefulPeriod entity.Duration `json:"graceful_perion_s"`
-	ContextTimeout entity.Duration `json:"context_timeout_s"`
-	AllowedOrigins []string        `json:"allowed_origins"`
-	MySQL          entity.DBConfig `json:"mysql"`
-	Jwt            JwtConfig       `json:"jwt"`
+	Port           string            `json:"port"`
+	GracefulPeriod entity.Duration   `json:"graceful_perion_s"`
+	ContextTimeout entity.Duration   `json:"context_timeout_s"`
+	AllowedOrigins []string          `json:"allowed_origins"`
+	MySQL          entity.DBConfig   `json:"mysql"`
+	Jwt            helper.JwtConfig  `json:"jwt"`
+	Hash           helper.HashConfig `json:"hash"`
 }
 
 func Init(log *logrus.Logger) ServiceConfig {

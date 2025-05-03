@@ -17,7 +17,7 @@ type DBTX interface {
 type AccountRepository interface {
 	Lock(ctx context.Context) error
 	GetAccountByEmail(ctx context.Context, email string) (*entity.Account, error)
-	InsertAccount(ctx context.Context, account entity.Account) (error, int64)
+	InsertAccount(ctx context.Context, account entity.Account) (int64, error)
 }
 
 type RefreshTokenRepository interface {
