@@ -22,7 +22,7 @@ type ConsumerHandler struct {
 
 func NewConsumerHandler(consumerService service.ConsumerService, ctxTimeout time.Duration) *ConsumerHandler {
 	if ctxTimeout <= 0 {
-		ctxTimeout = 30 * time.Second
+		ctxTimeout = 2 * time.Minute
 	}
 
 	return &ConsumerHandler{

@@ -18,5 +18,8 @@
     },
     "hash": {
         "hash_cost": 12
+    },
+    "local_media_storage": {
+        "path": "/assets/"
     }
 }

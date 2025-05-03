@@ -10,14 +10,19 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type LocalStorageConfig struct {
+	Path string `json:"path"`
+}
+
 type ServiceConfig struct {
-	Port           string            `json:"port"`
-	GracefulPeriod entity.Duration   `json:"graceful_perion_s"`
-	ContextTimeout entity.Duration   `json:"context_timeout_s"`
-	AllowedOrigins []string          `json:"allowed_origins"`
-	MySQL          entity.DBConfig   `json:"mysql"`
-	Jwt            helper.JwtConfig  `json:"jwt"`
-	Hash           helper.HashConfig `json:"hash"`
+	Port              string             `json:"port"`
+	GracefulPeriod    entity.Duration    `json:"graceful_perion_s"`
+	ContextTimeout    entity.Duration    `json:"context_timeout_s"`
+	AllowedOrigins    []string           `json:"allowed_origins"`
+	MySQL             entity.DBConfig    `json:"mysql"`
+	Jwt               helper.JwtConfig   `json:"jwt"`
+	Hash              helper.HashConfig  `json:"hash"`
+	LocalMediaStorage LocalStorageConfig `json:"local_media_storage"`
 }
 
 func Init(log *logrus.Logger) ServiceConfig {
