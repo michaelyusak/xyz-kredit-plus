@@ -34,8 +34,6 @@ func Init(log *logrus.Logger) ServiceConfig {
 		return config
 	}
 
-	fmt.Println(string(configData))
-
 	err = json.Unmarshal(configData, &config)
 	if err != nil {
 		log.WithFields(logrus.Fields{

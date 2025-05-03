@@ -15,9 +15,14 @@ type AccountHandler struct {
 	accountService service.AccountService
 }
 
-func NewAccountHandler(accountService service.AccountService) *AccountHandler {
+func NewAccountHandler(accountService service.AccountService, ctxTimeout time.Duration) *AccountHandler {
+	if ctxTimeout <= 0 {
+		ctxTimeout = 30 * time.Second
+	}
+
 	return &AccountHandler{
 		accountService: accountService,
+		ctxTimeout:     ctxTimeout,
 	}
 }
 

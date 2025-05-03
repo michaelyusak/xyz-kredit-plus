@@ -5,9 +5,9 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/michaelyusak/go-helper/adaptor"
+	hAdaptor "github.com/michaelyusak/go-helper/adaptor"
 	hHandler "github.com/michaelyusak/go-helper/handler"
-	"github.com/michaelyusak/go-helper/helper"
+	hHelper "github.com/michaelyusak/go-helper/helper"
 	hMiddleware "github.com/michaelyusak/go-helper/middleware"
 	"github.com/michaelyusak/xyz-kredit-plus/config"
 	"github.com/michaelyusak/xyz-kredit-plus/handler"
@@ -23,11 +23,9 @@ type routerOpts struct {
 }
 
 func createRouter(config config.ServiceConfig, log *logrus.Logger) *gin.Engine {
-	mysql, err := adaptor.ConnectDB(adaptor.MYSQL, config.MySQL)
+	mysql, err := hAdaptor.ConnectDB(hAdaptor.MYSQL, config.MySQL)
 	if err != nil {
-		log.WithFields(logrus.Fields{
-			"error": fmt.Sprintf("[server][createRouter][hAdaptor.ConnectElasticSearch] error: %s", err.Error()),
-		}).Error("error connecting to ElasticSearch")
+		panic(fmt.Errorf("[server][createRouter][hAdaptor.ConnectDB] error: %w", err))
 	}
 
 	transaction := repository.NewSqlTransaction(mysql)
@@ -35,13 +33,13 @@ func createRouter(config config.ServiceConfig, log *logrus.Logger) *gin.Engine {
 	consumerRepo := repository.NewConsumerRepositoryMysql(mysql)
 	RefreshTokenRepo := repository.NewRefreshTokenRepositoryMysql(mysql)
 
-	hash := helper.NewHashHelper(config.Hash)
-	jwt := helper.NewJWTHelper(config.Jwt)
+	hash := hHelper.NewHashHelper(config.Hash)
+	jwt := hHelper.NewJWTHelper(config.Jwt)
 
 	accountService := service.NewAccountService(transaction, hash, jwt, accountRepo, consumerRepo, RefreshTokenRepo)
 
 	commonHandler := &hHandler.CommonHandler{}
-	accountHandler := handler.NewAccountHandler(accountService)
+	accountHandler := handler.NewAccountHandler(accountService, 0)
 
 	opt := routerOpts{
 		common:         commonHandler,
