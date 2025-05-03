@@ -35,10 +35,11 @@ func NewAccountService(transaction repository.Transaction, hash hHelper.HashHelp
 }
 
 func (s *accountServiceImpl) generateJwt(account entity.Account, isKycCompleted bool) (*entity.TokenData, error) {
-	customClaims := make(map[string]any)
-	customClaims["account_id"] = account.Id
-	customClaims["email"] = account.Email
-	customClaims["is_kyc_completed"] = isKycCompleted
+	customClaims := entity.JwtClaims{
+		AccountId: account.Id,
+		Email: account.Email,
+		IsKycCompleted: isKycCompleted,
+	}
 
 	claimsBytes, err := json.Marshal(customClaims)
 	if err != nil {
