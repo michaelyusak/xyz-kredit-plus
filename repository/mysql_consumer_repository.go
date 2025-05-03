@@ -33,8 +33,8 @@ func (r *consumerRepositoryMysql) GetConsumerByAccountId(ctx context.Context, ac
 			place_of_birth, 
 			date_of_birth, 
 			salary, 
-			identity_card_photo_url, 
-			selfie_photo_url, 
+			identity_card_photo_key, 
+			selfie_photo_key, 
 			created_at, 
 			updated_at, 
 			deleted_at
@@ -60,8 +60,8 @@ func (r *consumerRepositoryMysql) GetConsumerByAccountId(ctx context.Context, ac
 		&consumer.PlaceOfBirth,
 		&consumer.DateOfBirth,
 		&consumer.Salary,
-		&consumer.IdentityCardPhotoUrl,
-		&consumer.SelfiePhotoUrl,
+		&consumer.IdentityCardPhoto.Key,
+		&consumer.SelfiePhoto.Key,
 		&consumer.CreatedAt,
 		&consumer.UpdatedAt,
 		&consumer.DeletedAt,
@@ -75,4 +75,36 @@ func (r *consumerRepositoryMysql) GetConsumerByAccountId(ctx context.Context, ac
 	}
 
 	return &consumer, nil
+}
+
+func (r *consumerRepositoryMysql) InsertConsumer(ctx context.Context, consumerData entity.Consumer) error {
+	var sb strings.Builder
+
+	sb.WriteString(`
+		INSERT INTO consumers (account_id, identity_number, full_name, legal_name, place_of_birth, date_of_birth, salary, identity_card_photo_key, selfie_photo_key, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	`)
+
+	q := sb.String()
+
+	now := nowUnixMilli()
+
+	_, err := r.dbtx.ExecContext(ctx, q,
+		consumerData.AccountId,
+		consumerData.IdentityNumber,
+		consumerData.FullName,
+		consumerData.LegalName,
+		consumerData.PlaceOfBirth,
+		consumerData.DateOfBirth,
+		consumerData.Salary,
+		consumerData.IdentityCardPhoto.Key,
+		consumerData.SelfiePhoto.Key,
+		now,
+		now,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
