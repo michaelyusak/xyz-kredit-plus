@@ -13,6 +13,7 @@ CREATE TABLE accounts (
 
 CREATE TABLE consuments (
     consument_id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    account_id BIGINT NOT NULL,
     identity_number VARCHAR(100) NOT NULL,
     full_name VARCHAR(255) NOT NULL,
     legal_name VARCHAR(255) NOT NULL,
@@ -25,7 +26,8 @@ CREATE TABLE consuments (
     updated_at BIGINT NOT NULL,
     deleted_at BIGINT DEFAULT NULL,
     INDEX idx_consument_identity_number (identity_number),
-    INDEX idx_consument_full_name (full_name)
+    INDEX idx_consument_full_name (full_name),
+    INDEX idx_consument_account_id (account_id)
 );
 
 CREATE TABLE refresh_tokens (
