@@ -11,7 +11,7 @@ import (
 )
 
 type AccountHandler struct {
-	ctxTimeout time.Duration
+	ctxTimeout     time.Duration
 	accountService service.AccountService
 }
 
@@ -26,7 +26,7 @@ func (h *AccountHandler) Register(ctx *gin.Context) {
 
 	var newAccount entity.Account
 
-	err := ctx.ShouldBindJSON(&newAccount)
+	err := ctx.ShouldBind(&newAccount)
 	if err != nil {
 		ctx.Error(err)
 		return
