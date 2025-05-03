@@ -37,7 +37,7 @@ func createRouter(config config.ServiceConfig, log *logrus.Logger) *gin.Engine {
 	accountRepo := repository.NewAccountRepositoryMysql(mysql)
 	consumerRepo := repository.NewConsumerRepositoryMysql(mysql)
 	RefreshTokenRepo := repository.NewRefreshTokenRepositoryMysql(mysql)
-	mediaRepo := repository.NewMediaRepositoryLocal(config.LocalMediaStorage.Path)
+	mediaRepo := repository.NewMediaRepositoryLocal(config.LocalMediaStorage.Path) // save file at local for simplicity
 
 	hash := hHelper.NewHashHelper(config.Hash)
 	jwt := hHelper.NewJWTHelper(config.Jwt, jwt.SigningMethodHS512)

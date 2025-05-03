@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -68,7 +69,9 @@ func (h *ConsumerHandler) ProcessKyc(ctx *gin.Context) {
 
 	consumerData.AccountId = accountId
 
-	identityCardPhotoFile, _, err := ctx.Request.FormFile("identity_card_photo")
+	fileSizeLimit := 3 * 1024 * 1024 // 3MB
+
+	identityCardPhotoFile, identityCardPhotoHeader, err := ctx.Request.FormFile("identity_card_photo")
 	if err != nil {
 		if !errors.Is(err, http.ErrMissingFile) {
 			ctx.Error(err)
@@ -82,8 +85,16 @@ func (h *ConsumerHandler) ProcessKyc(ctx *gin.Context) {
 			return
 		}
 	}
+	if identityCardPhotoHeader.Size > int64(fileSizeLimit) {
+		ctx.Error(apperror.BadRequestError(apperror.AppErrorOpt{
+			ResponseMessage: fmt.Sprintf(
+				"identity card photo file size %.2fMB exceeded limit of %s",
+				float32(identityCardPhotoHeader.Size/(1024*1024)),
+				"3MB"),
+		}))
+	}
 
-	selfiePhotoFile, _, err := ctx.Request.FormFile("selfie_photo")
+	selfiePhotoFile, selfiePhotoHeader, err := ctx.Request.FormFile("selfie_photo")
 	if err != nil {
 		if !errors.Is(err, http.ErrMissingFile) {
 			ctx.Error(err)
@@ -96,6 +107,14 @@ func (h *ConsumerHandler) ProcessKyc(ctx *gin.Context) {
 			}))
 			return
 		}
+	}
+	if selfiePhotoHeader.Size > int64(fileSizeLimit) {
+		ctx.Error(apperror.BadRequestError(apperror.AppErrorOpt{
+			ResponseMessage: fmt.Sprintf(
+				"selfie photo file size %.2fMB exceeded limit of %s",
+				float32(selfiePhotoHeader.Size/(1024*1024)),
+				"3MB"),
+		}))
 	}
 
 	consumerData.IdentityCardPhoto.File = identityCardPhotoFile
