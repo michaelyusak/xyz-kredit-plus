@@ -1,0 +1,19 @@
+{
+    "port": ":8080",
+    "graceful_period_s": "30s",
+    "context_timeot_s": "2m",
+    "allowed_origins": [
+        "http://localhost:5173"
+    ],
+    "postgres": {
+        "username": "root",
+        "password": "password",
+        "host": "127.0.0.1",
+        "port": "3306",
+        "db_name": "kredit_plus_xyz_db"
+    },
+    "jwt": {
+        "issuer": "kredit-plus-xyz",
+        "key": "123456789kreditplus123456789"
+    }
+}
