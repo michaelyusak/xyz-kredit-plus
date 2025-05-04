@@ -49,7 +49,7 @@ func AuthMiddleware(jwtHelper hHelper.JWTHelper) gin.HandlerFunc {
 
 		c.Set(appconstant.AccountIdCtxKey, claims.AccountId)
 		c.Set(appconstant.EmailCtxKey, claims.Email)
-		c.Set(appconstant.IsKycCompletedCtxKey, claims.AccountId)
+		c.Set(appconstant.IsKycCompletedCtxKey, claims.IsKycCompleted)
 
 		c.Next()
 	}

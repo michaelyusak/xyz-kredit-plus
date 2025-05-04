@@ -56,7 +56,7 @@ func (s *transactionServiceImpl) CreateTransaction(ctx context.Context, transact
 	err := s.transaction.Begin()
 	if err != nil {
 		return nil, apperror.InternalServerError(apperror.AppErrorOpt{
-			ResponseMessage: fmt.Sprintf("[transaction_service][CreateTransaction][transaction.Begin] Error: %s | account_id: %v", err.Error(), transaction.AccountId),
+			Message: fmt.Sprintf("[transaction_service][CreateTransaction][transaction.Begin] Error: %s | account_id: %v", err.Error(), transaction.AccountId),
 		})
 	}
 
@@ -74,7 +74,7 @@ func (s *transactionServiceImpl) CreateTransaction(ctx context.Context, transact
 	limit, err := accountLimitRepo.GetAccountLimitByAccountId(ctx, transaction.AccountId, true)
 	if err != nil {
 		return nil, apperror.InternalServerError(apperror.AppErrorOpt{
-			ResponseMessage: fmt.Sprintf("[transaction_service][CreateTransaction][accountLimitRepo.GetAccountLimitByAccountId] Error: %s | account_id: %v", err.Error(), transaction.AccountId),
+			Message: fmt.Sprintf("[transaction_service][CreateTransaction][accountLimitRepo.GetAccountLimitByAccountId] Error: %s | account_id: %v", err.Error(), transaction.AccountId),
 		})
 	}
 
