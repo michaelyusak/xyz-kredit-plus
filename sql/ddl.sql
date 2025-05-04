@@ -1,5 +1,8 @@
-DROP TABLE IF EXISTS consuments;
 DROP TABLE IF EXISTS accounts;
+DROP TABLE IF EXISTS consumers;
+DROP TABLE IF EXISTS refresh_tokens;
+DROP TABLE IF EXISTS accounts_limits;
+DROP TABLE IF EXISTS transactions;
 
 CREATE TABLE accounts (
     account_id BIGINT PRIMARY KEY AUTO_INCREMENT,
@@ -40,7 +43,7 @@ CREATE TABLE refresh_tokens (
     INDEX idx_refresh_token (refresh_token)
 );
 
-CREATE TABLE account_limtis (
+CREATE TABLE account_limits (
     account_limit_id BIGINT PRIMARY KEY AUTO_INCREMENT,
     account_id BIGINT NOT NULL,
     account_limit_1_m FLOAT NOT NULL,

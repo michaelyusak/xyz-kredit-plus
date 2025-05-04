@@ -1,0 +1,31 @@
+services:
+  mysql:
+    image: mysql:9.3.0
+    env_file:
+      - ./.mysql.env
+    ports:
+      - 3307:3306
+    volumes:
+      - ./sql/ddl.sql:/docker-entrypoint-initdb.d/ddl.sql
+    command: [ "mysqld" ]
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  xyz-be:
+    image: xyz-credit-plus-be
+    build:
+      dockerfile: ./Dockerfile
+    ports:
+      - 8080:8080
+    restart: always
+    volumes:
+      - ./config.json:/config.json
+      # - ./assets:/app/assets # optional
+    environment:
+      - KREDIT_PLUS_USERS_SERVICE_CONFIG=./config.json
+    depends_on:
+      mysql:
+        condition: service_healthy
