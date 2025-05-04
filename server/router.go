@@ -23,6 +23,7 @@ type routerOpts struct {
 	common         *hHandler.CommonHandler
 	account        *handler.AccountHandler
 	consumer       *handler.ConsumerHandler
+	transaction    *handler.TransactionHandler
 	jwt            hHelper.JWTHelper
 	allowedOrigins []string
 }
@@ -37,22 +38,27 @@ func createRouter(config config.ServiceConfig, log *logrus.Logger) *gin.Engine {
 	accountRepo := repository.NewAccountRepositoryMysql(mysql)
 	consumerRepo := repository.NewConsumerRepositoryMysql(mysql)
 	RefreshTokenRepo := repository.NewRefreshTokenRepositoryMysql(mysql)
-	mediaRepo := repository.NewMediaRepositoryLocal(config.LocalMediaStorage.Path) // save file at local for simplicity
+	mediaRepo := repository.NewMediaRepositoryLocal(config.LocalMediaStorage.Path) // save file into local storage for simplicity
+	accountLimitRepo := repository.NewAccountLimitRepositoryMysql(mysql)
+	transactionRepo := repository.NewTransactionRepositoryMysql(mysql)
 
 	hash := hHelper.NewHashHelper(config.Hash)
 	jwt := hHelper.NewJWTHelper(config.Jwt, jwt.SigningMethodHS512)
 
 	accountService := service.NewAccountService(transaction, hash, jwt, accountRepo, consumerRepo, RefreshTokenRepo)
-	consumerService := service.NewConsumerService(transaction, consumerRepo, mediaRepo)
+	consumerService := service.NewConsumerService(transaction, consumerRepo, mediaRepo, accountLimitRepo)
+	transactionService := service.NewTransactionService(transaction, accountLimitRepo, transactionRepo)
 
 	commonHandler := &hHandler.CommonHandler{}
 	accountHandler := handler.NewAccountHandler(accountService, time.Duration(config.ContextTimeout))
 	consumerHandler := handler.NewConsumerHandler(consumerService, time.Duration(config.ContextTimeout))
+	transactionHandler := handler.NewTransactionHandler(transactionService, time.Duration(config.ContextTimeout))
 
 	opt := routerOpts{
 		common:         commonHandler,
 		account:        accountHandler,
 		consumer:       consumerHandler,
+		transaction:    transactionHandler,
 		jwt:            jwt,
 		allowedOrigins: config.AllowedOrigins,
 	}
@@ -77,12 +83,13 @@ func newRouter(routerOpts routerOpts, log *logrus.Logger) *gin.Engine {
 	)
 
 	authMiddleware := middleware.AuthMiddleware(routerOpts.jwt)
-	_ = middleware.KycFilter()
+	kycFilter := middleware.KycFilter()
 
 	corsRouting(router, corsConfig, routerOpts.allowedOrigins)
 	commonRouting(router, routerOpts.common)
 	accountRouting(router, routerOpts.account)
 	consumerRouting(router, authMiddleware, routerOpts.consumer)
+	transactionRouting(router, authMiddleware, kycFilter, routerOpts.transaction)
 
 	return router
 }
@@ -109,7 +116,13 @@ func accountRouting(router *gin.Engine, account *handler.AccountHandler) {
 }
 
 func consumerRouting(router *gin.Engine, authMiddleware gin.HandlerFunc, consumer *handler.ConsumerHandler) {
-	consumerRouting := router.Group("/v1/consumer")
+	consumerRouter := router.Group("/v1/consumer")
 
-	consumerRouting.POST("/process-kyc", authMiddleware, consumer.ProcessKyc)
+	consumerRouter.POST("/process-kyc", authMiddleware, consumer.ProcessKyc)
+}
+
+func transactionRouting(router *gin.Engine, authMiddleware, kycFilter gin.HandlerFunc, transaction *handler.TransactionHandler) {
+	transactionRouter := router.Group("/v1/transaction")
+
+	transactionRouter.POST("/create", authMiddleware, kycFilter, transaction.CreateTransaction)
 }

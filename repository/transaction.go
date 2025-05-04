@@ -12,6 +12,8 @@ type Transaction interface {
 	AccountMysqlTx() *accountRepositoryMysql
 	ConsumerMysqlTx() *consumerRepositoryMysql
 	RefreshTokenMysqlTx() *refreshTokenRepositoryMysql
+	AccountLimitMysqlTx() *accountLimitRepositoryMysql
+	TransactionMysqlTx() *transactionRepositoryMysql
 }
 
 type sqlTransaction struct {
@@ -58,6 +60,18 @@ func (s *sqlTransaction) ConsumerMysqlTx() *consumerRepositoryMysql {
 
 func (s *sqlTransaction) RefreshTokenMysqlTx() *refreshTokenRepositoryMysql {
 	return &refreshTokenRepositoryMysql{
+		dbtx: s.tx,
+	}
+}
+
+func (s *sqlTransaction) AccountLimitMysqlTx() *accountLimitRepositoryMysql {
+	return &accountLimitRepositoryMysql{
+		dbtx: s.tx,
+	}
+}
+
+func (s *sqlTransaction) TransactionMysqlTx() *transactionRepositoryMysql {
+	return &transactionRepositoryMysql{
 		dbtx: s.tx,
 	}
 }

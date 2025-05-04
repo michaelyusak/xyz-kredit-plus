@@ -14,3 +14,7 @@ type AccountService interface {
 type ConsumerService interface {
 	ProcessKyc(ctx context.Context, consumerData entity.Consumer) error
 }
+
+type TransactionService interface {
+	CreateTransaction(ctx context.Context, transaction entity.Transaction) (*entity.Transaction, error)
+}
