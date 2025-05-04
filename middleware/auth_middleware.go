@@ -60,7 +60,7 @@ func KycFilter() gin.HandlerFunc {
 		isKycCompleted := c.Value(appconstant.IsKycCompletedCtxKey).(bool)
 
 		if !isKycCompleted {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, hDto.ErrorResponse{Message: hAppconstant.MsgUnauthorized})
+			c.AbortWithStatusJSON(http.StatusUnauthorized, hDto.ErrorResponse{Message: "kyc process incomplete"})
 			return
 		}
 

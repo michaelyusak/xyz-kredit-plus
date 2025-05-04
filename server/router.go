@@ -46,7 +46,7 @@ func createRouter(config config.ServiceConfig, log *logrus.Logger) *gin.Engine {
 	jwt := hHelper.NewJWTHelper(config.Jwt, jwt.SigningMethodHS512)
 
 	accountService := service.NewAccountService(transaction, hash, jwt, accountRepo, consumerRepo, RefreshTokenRepo)
-	consumerService := service.NewConsumerService(transaction, consumerRepo, mediaRepo)
+	consumerService := service.NewConsumerService(transaction, consumerRepo, mediaRepo, accountLimitRepo)
 	transactionService := service.NewTransactionService(transaction, accountLimitRepo, transactionRepo)
 
 	commonHandler := &hHandler.CommonHandler{}

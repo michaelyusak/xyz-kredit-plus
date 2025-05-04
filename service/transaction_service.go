@@ -100,6 +100,10 @@ func (s *transactionServiceImpl) CreateTransaction(ctx context.Context, transact
 		if transaction.OTR <= limit.Limit4M {
 			isLimitSufficient = true
 		}
+	default:
+		return nil, apperror.BadRequestError(apperror.AppErrorOpt{
+			Message: "maximum installemnt months is 4",
+		})
 	}
 
 	if !isLimitSufficient {

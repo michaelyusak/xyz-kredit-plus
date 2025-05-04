@@ -13,28 +13,37 @@ import (
 )
 
 type consumerServiceImpl struct {
-	transaction  repository.Transaction
-	consumerRepo repository.ConsumerRepository
-	mediaRepo    repository.MediaRepository
+	transaction      repository.Transaction
+	consumerRepo     repository.ConsumerRepository
+	mediaRepo        repository.MediaRepository
+	accountLimitRepo repository.AccountLimitRepository
 }
 
-func NewConsumerService(transaction repository.Transaction, consumerRepo repository.ConsumerRepository, mediaRepo repository.MediaRepository) *consumerServiceImpl {
+func NewConsumerService(transaction repository.Transaction, consumerRepo repository.ConsumerRepository, mediaRepo repository.MediaRepository, accountLimitRepo repository.AccountLimitRepository) *consumerServiceImpl {
 	return &consumerServiceImpl{
-		transaction:  transaction,
-		consumerRepo: consumerRepo,
-		mediaRepo:    mediaRepo,
+		transaction:      transaction,
+		consumerRepo:     consumerRepo,
+		mediaRepo:        mediaRepo,
+		accountLimitRepo: accountLimitRepo,
 	}
 }
 
-// Validate consumer data for KYC
-func (s *consumerServiceImpl) validateData(consumerData entity.Consumer) error {
+// Validate consumer data for KYC and calculate account limit
+func (s *consumerServiceImpl) validateData(consumerData entity.Consumer) (*entity.AccountLimit, error) {
 	// Validate data e.g. liveness, check Dukcapil, etc
 
-	if consumerData.AccountId != 0 {
-		return nil
-	}
+	var limit entity.AccountLimit
 
-	return nil
+	limit.AccountId = consumerData.AccountId
+
+	// Calculate limit based on consumer risks
+
+	limit.Limit1M = 600000
+	limit.Limit2M = 800000
+	limit.Limit3M = 1000000
+	limit.Limit4M = 1200000
+
+	return &limit, nil
 }
 
 // Validate consumer data
@@ -86,7 +95,7 @@ func (s *consumerServiceImpl) ProcessKyc(ctx context.Context, consumerData entit
 		})
 	}
 
-	err = s.validateData(consumerData)
+	accountLimit, err := s.validateData(consumerData)
 	if err != nil {
 		return apperror.BadRequestError(apperror.AppErrorOpt{
 			Message:         fmt.Sprintf("[consumer_service][ProcessKyc][validateData] Error: %s | account_id: %v", err.Error(), consumerData.AccountId),
@@ -122,6 +131,7 @@ func (s *consumerServiceImpl) ProcessKyc(ctx context.Context, consumerData entit
 	}
 
 	consumerRepo := s.transaction.ConsumerMysqlTx()
+	accountLimitRepo := s.transaction.AccountLimitMysqlTx()
 
 	defer func() {
 		if err != nil {
@@ -142,6 +152,13 @@ func (s *consumerServiceImpl) ProcessKyc(ctx context.Context, consumerData entit
 	if err != nil {
 		return apperror.InternalServerError(apperror.AppErrorOpt{
 			Message: fmt.Sprintf("[consumer_service][ProcessKyc][consumerRepo.InsertConsumer] Error: %s | account_id: %v", err.Error(), consumerData.AccountId),
+		})
+	}
+
+	err = accountLimitRepo.InsertLimit(ctx, *accountLimit)
+	if err != nil {
+		return apperror.InternalServerError(apperror.AppErrorOpt{
+			Message: fmt.Sprintf("[consumer_service][ProcessKyc][accountLimitRepo.InsertLimit] Error: %s | account_id: %v", err.Error(), consumerData.AccountId),
 		})
 	}
 

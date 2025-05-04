@@ -74,10 +74,10 @@ func (r *accountLimitRepositoryMysql) UpdateLimit(ctx context.Context, accountLi
 	sb.WriteString(`
 		UPDATE account_limits
 		SET
-			account_limit_1_m = ?
-			account_limit_1_m = ?
-			account_limit_1_m = ?
-			account_limit_1_m = ?
+			account_limit_1_m = ?,
+			account_limit_2_m = ?,
+			account_limit_3_m = ?,
+			account_limit_4_m = ?,
 			updated_at = ?
 		WHERE account_limit_id = ?
 	`)
@@ -91,7 +91,43 @@ func (r *accountLimitRepositoryMysql) UpdateLimit(ctx context.Context, accountLi
 		accountLimit.Limit2M,
 		accountLimit.Limit3M,
 		accountLimit.Limit4M,
+		now,
 		accountLimit.Id,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *accountLimitRepositoryMysql) InsertLimit(ctx context.Context, accountLimit entity.AccountLimit) error {
+	var sb strings.Builder
+
+	sb.WriteString(`
+		INSERT INTO account_limits (
+			account_id,
+			account_limit_1_m,
+			account_limit_2_m,
+			account_limit_3_m,
+			account_limit_4_m,
+			created_at,
+			updated_at
+		)
+		VALUES (?, ?, ?, ?, ?, ?, ?)
+	`)
+
+	q := sb.String()
+
+	now := nowUnixMilli()
+
+	_, err := r.dbtx.ExecContext(ctx, q,
+		accountLimit.AccountId,
+		accountLimit.Limit1M,
+		accountLimit.Limit2M,
+		accountLimit.Limit3M,
+		accountLimit.Limit4M,
+		now,
 		now,
 	)
 	if err != nil {
