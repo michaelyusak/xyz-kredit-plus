@@ -2,7 +2,7 @@ package entity
 
 type AccountLimit struct {
 	Id        int64   `json:"-"`
-	AccountId int64   `json:"account_id"`
+	AccountId int64   `json:"-"`
 	Limit1M   float64 `json:"limit_1_m"`
 	Limit2M   float64 `json:"limit_2_m"`
 	Limit3M   float64 `json:"limit_3_m"`
