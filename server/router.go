@@ -17,6 +17,10 @@ import (
 	"github.com/michaelyusak/xyz-kredit-plus/repository"
 	"github.com/michaelyusak/xyz-kredit-plus/service"
 	"github.com/sirupsen/logrus"
+
+	_ "github.com/michaelyusak/xyz-kredit-plus/docs"
+	swaggerfiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 type routerOpts struct {
@@ -87,6 +91,7 @@ func newRouter(routerOpts routerOpts, log *logrus.Logger) *gin.Engine {
 
 	corsRouting(router, corsConfig, routerOpts.allowedOrigins)
 	commonRouting(router, routerOpts.common)
+	swaggerRouting(router)
 	accountRouting(router, routerOpts.account)
 	consumerRouting(router, authMiddleware, routerOpts.consumer)
 	transactionRouting(router, authMiddleware, kycFilter, routerOpts.transaction)
@@ -106,6 +111,10 @@ func corsRouting(router *gin.Engine, configCors cors.Config, allowedOrigins []st
 func commonRouting(router *gin.Engine, common *hHandler.CommonHandler) {
 	router.GET("/ping", common.Ping)
 	router.NoRoute(common.NoRoute)
+}
+
+func swaggerRouting(router *gin.Engine) {
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 }
 
 func accountRouting(router *gin.Engine, account *handler.AccountHandler) {

@@ -1,0 +1,274 @@
+basePath: /v1
+definitions:
+  dto.ErrorResponse:
+    properties:
+      details:
+        items:
+          $ref: '#/definitions/dto.ValidationErrorDetails'
+        type: array
+      message:
+        type: string
+    type: object
+  dto.Response:
+    properties:
+      data: {}
+      message:
+        type: string
+    type: object
+  dto.ValidationErrorDetails:
+    properties:
+      field:
+        type: string
+      message:
+        type: string
+    type: object
+  entity.CreateTransactionReq:
+    properties:
+      admin_fee:
+        example: 100000
+        type: number
+      asset_name:
+        example: dog house
+        type: string
+      contact_number:
+        example: "081312341234"
+        type: string
+      installment_months:
+        example: 2
+        maximum: 4
+        minimum: 1
+        type: integer
+      otr:
+        example: 1000000
+        type: number
+      total_installment:
+        example: 1000000000
+        type: number
+      total_interest:
+        example: 999000000
+        type: number
+    required:
+    - admin_fee
+    - asset_name
+    - contact_number
+    - installment_months
+    - otr
+    - total_installment
+    - total_interest
+    type: object
+  entity.LoginRegisterReq:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+      password:
+        example: '@abcD1234'
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  entity.Token:
+    properties:
+      expired_at:
+        type: integer
+      token:
+        type: string
+    type: object
+  entity.TokenData:
+    properties:
+      access_token:
+        $ref: '#/definitions/entity.Token'
+      refresh_token:
+        $ref: '#/definitions/entity.Token'
+    type: object
+  entity.Transaction:
+    properties:
+      admin_fee:
+        type: number
+      asset_name:
+        type: string
+      contact_number:
+        type: string
+      created_at:
+        type: integer
+      installment_months:
+        maximum: 4
+        minimum: 1
+        type: integer
+      otr:
+        type: number
+      total_installment:
+        type: number
+      total_interest:
+        type: number
+      updated_at:
+        type: integer
+    required:
+    - admin_fee
+    - asset_name
+    - contact_number
+    - installment_months
+    - otr
+    - total_installment
+    - total_interest
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: This is a sample server.
+  title: Your Project API
+  version: "1.0"
+paths:
+  /account/login:
+    post:
+      consumes:
+      - application/json
+      description: Login to an existing account
+      parameters:
+      - description: Register request body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/entity.LoginRegisterReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/entity.TokenData'
+                message:
+                  type: string
+              type: object
+      summary: Login to an account
+      tags:
+      - accounts
+  /account/register:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new account
+      parameters:
+      - description: Register request body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/entity.LoginRegisterReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/entity.TokenData'
+                message:
+                  type: string
+              type: object
+      summary: Register a new account
+      tags:
+      - accounts
+  /consumer/process-kyc:
+    post:
+      consumes:
+      - multipart/form-data
+      description: |-
+        Post consumer data for KYC, including personal information and photos (identity card and selfie).
+        Consumer JSON structure: see model entity.Consumer
+        Example Data: {"nik": "124","full_name": "user test","legal_name": "user test legal","place_of_birth": "bumi","date_of_birth": "12-07-2001","salary": 600000,"identity_card_photo": {"base64":"image_base64_encoded"},"selfie_photo": {"base64": "image_base64_encoded"}}
+      parameters:
+      - description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Consumer data in JSON format (same as entity.Consumer)
+        in: formData
+        name: data
+        required: true
+        type: string
+      - description: Identity card photo
+        in: formData
+        name: identity_card_photo
+        type: file
+      - description: Selfie photo
+        in: formData
+        name: selfie_photo
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  type: object
+                message:
+                  type: string
+              type: object
+        "400":
+          description: Invalid request or validation error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Process a KYC for an account
+      tags:
+      - consumers
+  /transaction/create:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new transaction for the account, using the provided transaction
+        details.
+      parameters:
+      - description: Bearer token
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Transaction request body
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/entity.CreateTransactionReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Transaction created successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/entity.Transaction'
+                message:
+                  type: string
+              type: object
+        "400":
+          description: validation error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Create a new transaction
+      tags:
+      - transactions
+schemes:
+- http
+swagger: "2.0"

@@ -1,0 +1,416 @@
+{
+    "schemes": [
+        "http"
+    ],
+    "swagger": "2.0",
+    "info": {
+        "description": "This is a sample server.",
+        "title": "Your Project API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "host": "localhost:8080",
+    "basePath": "/v1",
+    "paths": {
+        "/account/login": {
+            "post": {
+                "description": "Login to an existing account",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "accounts"
+                ],
+                "summary": "Login to an account",
+                "parameters": [
+                    {
+                        "description": "Register request body",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/entity.LoginRegisterReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/entity.TokenData"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/account/register": {
+            "post": {
+                "description": "Creates a new account",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "accounts"
+                ],
+                "summary": "Register a new account",
+                "parameters": [
+                    {
+                        "description": "Register request body",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/entity.LoginRegisterReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/entity.TokenData"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/consumer/process-kyc": {
+            "post": {
+                "description": "Post consumer data for KYC, including personal information and photos (identity card and selfie).\nConsumer JSON structure: see model entity.Consumer\nExample Data: {\"nik\": \"124\",\"full_name\": \"user test\",\"legal_name\": \"user test legal\",\"place_of_birth\": \"bumi\",\"date_of_birth\": \"12-07-2001\",\"salary\": 600000,\"identity_card_photo\": {\"base64\":\"image_base64_encoded\"},\"selfie_photo\": {\"base64\": \"image_base64_encoded\"}}",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "consumers"
+                ],
+                "summary": "Process a KYC for an account",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Consumer data in JSON format (same as entity.Consumer)",
+                        "name": "data",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Identity card photo",
+                        "name": "identity_card_photo",
+                        "in": "formData"
+                    },
+                    {
+                        "type": "file",
+                        "description": "Selfie photo",
+                        "name": "selfie_photo",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Success",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request or validation error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/transaction/create": {
+            "post": {
+                "description": "Creates a new transaction for the account, using the provided transaction details.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "transactions"
+                ],
+                "summary": "Create a new transaction",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Bearer token",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Transaction request body",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/entity.CreateTransactionReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Transaction created successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/dto.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/entity.Transaction"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "validation error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "dto.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "details": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.ValidationErrorDetails"
+                    }
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.Response": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.ValidationErrorDetails": {
+            "type": "object",
+            "properties": {
+                "field": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "entity.CreateTransactionReq": {
+            "type": "object",
+            "required": [
+                "admin_fee",
+                "asset_name",
+                "contact_number",
+                "installment_months",
+                "otr",
+                "total_installment",
+                "total_interest"
+            ],
+            "properties": {
+                "admin_fee": {
+                    "type": "number",
+                    "example": 100000
+                },
+                "asset_name": {
+                    "type": "string",
+                    "example": "dog house"
+                },
+                "contact_number": {
+                    "type": "string",
+                    "example": "081312341234"
+                },
+                "installment_months": {
+                    "type": "integer",
+                    "maximum": 4,
+                    "minimum": 1,
+                    "example": 2
+                },
+                "otr": {
+                    "type": "number",
+                    "example": 1000000
+                },
+                "total_installment": {
+                    "type": "number",
+                    "example": 1000000000
+                },
+                "total_interest": {
+                    "type": "number",
+                    "example": 999000000
+                }
+            }
+        },
+        "entity.LoginRegisterReq": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                },
+                "password": {
+                    "type": "string",
+                    "example": "@abcD1234"
+                }
+            }
+        },
+        "entity.Token": {
+            "type": "object",
+            "properties": {
+                "expired_at": {
+                    "type": "integer"
+                },
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "entity.TokenData": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "$ref": "#/definitions/entity.Token"
+                },
+                "refresh_token": {
+                    "$ref": "#/definitions/entity.Token"
+                }
+            }
+        },
+        "entity.Transaction": {
+            "type": "object",
+            "required": [
+                "admin_fee",
+                "asset_name",
+                "contact_number",
+                "installment_months",
+                "otr",
+                "total_installment",
+                "total_interest"
+            ],
+            "properties": {
+                "admin_fee": {
+                    "type": "number"
+                },
+                "asset_name": {
+                    "type": "string"
+                },
+                "contact_number": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "integer"
+                },
+                "installment_months": {
+                    "type": "integer",
+                    "maximum": 4,
+                    "minimum": 1
+                },
+                "otr": {
+                    "type": "number"
+                },
+                "total_installment": {
+                    "type": "number"
+                },
+                "total_interest": {
+                    "type": "number"
+                },
+                "updated_at": {
+                    "type": "integer"
+                }
+            }
+        }
+    }
+}

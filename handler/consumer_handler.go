@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"github.com/michaelyusak/go-helper/apperror"
+	_ "github.com/michaelyusak/go-helper/dto"
 	hHelper "github.com/michaelyusak/go-helper/helper"
 	"github.com/michaelyusak/xyz-kredit-plus/appconstant"
 	"github.com/michaelyusak/xyz-kredit-plus/entity"
@@ -33,6 +34,21 @@ func NewConsumerHandler(consumerService service.ConsumerService, ctxTimeout time
 	}
 }
 
+// Consumer godoc
+// @Summary Process a KYC for an account
+// @Description Post consumer data for KYC, including personal information and photos (identity card and selfie).
+// @Description Consumer JSON structure: see model entity.Consumer
+// @Description Example Data: {"nik": "124","full_name": "user test","legal_name": "user test legal","place_of_birth": "bumi","date_of_birth": "12-07-2001","salary": 600000,"identity_card_photo": {"base64":"image_base64_encoded"},"selfie_photo": {"base64": "image_base64_encoded"}}
+// @Tags consumers
+// @Accept  multipart/form-data
+// @Produce  json
+// @Param Authorization header string true "Bearer token"
+// @Param data formData string true "Consumer data in JSON format (same as entity.Consumer)" example={"nik": "124","full_name": "user test","legal_name": "user test legal","place_of_birth": "bumi","date_of_birth": "12-07-2001","salary": 600000,"identity_card_photo": {"base64":""},"selfie_photo": {"base64": ""}}
+// @Param identity_card_photo formData file false "Identity card photo"
+// @Param selfie_photo formData file false "Selfie photo"
+// @Success 200 {object} dto.Response{message=string,data=nil} "Success"
+// @Failure 400 {object} dto.ErrorResponse "Invalid request or validation error"
+// @Router /consumer/process-kyc [post]
 func (h *ConsumerHandler) ProcessKyc(ctx *gin.Context) {
 	ctx.Header("Content-Type", "application/json")
 
@@ -85,13 +101,15 @@ func (h *ConsumerHandler) ProcessKyc(ctx *gin.Context) {
 			return
 		}
 	}
-	if identityCardPhotoHeader.Size > int64(fileSizeLimit) {
-		ctx.Error(apperror.BadRequestError(apperror.AppErrorOpt{
-			ResponseMessage: fmt.Sprintf(
-				"identity card photo file size %.2fMB exceeded limit of %s",
-				float32(identityCardPhotoHeader.Size/(1024*1024)),
-				"3MB"),
-		}))
+	if identityCardPhotoFile != nil && identityCardPhotoHeader != nil {
+		if identityCardPhotoHeader.Size > int64(fileSizeLimit) {
+			ctx.Error(apperror.BadRequestError(apperror.AppErrorOpt{
+				ResponseMessage: fmt.Sprintf(
+					"identity card photo file size %.2fMB exceeded limit of %s",
+					float32(identityCardPhotoHeader.Size/(1024*1024)),
+					"3MB"),
+			}))
+		}
 	}
 
 	selfiePhotoFile, selfiePhotoHeader, err := ctx.Request.FormFile("selfie_photo")
@@ -108,13 +126,15 @@ func (h *ConsumerHandler) ProcessKyc(ctx *gin.Context) {
 			return
 		}
 	}
-	if selfiePhotoHeader.Size > int64(fileSizeLimit) {
-		ctx.Error(apperror.BadRequestError(apperror.AppErrorOpt{
-			ResponseMessage: fmt.Sprintf(
-				"selfie photo file size %.2fMB exceeded limit of %s",
-				float32(selfiePhotoHeader.Size/(1024*1024)),
-				"3MB"),
-		}))
+	if selfiePhotoFile != nil && selfiePhotoHeader != nil {
+		if selfiePhotoHeader.Size > int64(fileSizeLimit) {
+			ctx.Error(apperror.BadRequestError(apperror.AppErrorOpt{
+				ResponseMessage: fmt.Sprintf(
+					"selfie photo file size %.2fMB exceeded limit of %s",
+					float32(selfiePhotoHeader.Size/(1024*1024)),
+					"3MB"),
+			}))
+		}
 	}
 
 	consumerData.IdentityCardPhoto.File = identityCardPhotoFile

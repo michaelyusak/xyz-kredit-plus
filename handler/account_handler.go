@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	_ "github.com/michaelyusak/go-helper/dto"
 	"github.com/michaelyusak/go-helper/helper"
 	"github.com/michaelyusak/xyz-kredit-plus/entity"
 	"github.com/michaelyusak/xyz-kredit-plus/service"
@@ -26,6 +27,15 @@ func NewAccountHandler(accountService service.AccountService, ctxTimeout time.Du
 	}
 }
 
+// Account godoc
+// @Summary Register a new account
+// @Description Creates a new account
+// @Tags accounts
+// @Accept  json
+// @Produce  json
+// @Param request body entity.LoginRegisterReq true "Register request body"
+// @Success 200 {object} dto.Response{message=string,data=entity.TokenData} "Success"
+// @Router /account/register [post]
 func (h *AccountHandler) Register(ctx *gin.Context) {
 	ctx.Header("Content-Type", "application/json")
 
@@ -49,6 +59,15 @@ func (h *AccountHandler) Register(ctx *gin.Context) {
 	helper.ResponseOK(ctx, *token)
 }
 
+// Account godoc
+// @Summary Login to an account
+// @Description Login to an existing account
+// @Tags accounts
+// @Accept  json
+// @Produce  json
+// @Param request body entity.LoginRegisterReq true "Register request body"
+// @Success 200 {object} dto.Response{message=string,data=entity.TokenData} "Success"
+// @Router /account/login [post]
 func (h *AccountHandler) Login(ctx *gin.Context) {
 	ctx.Header("Content-Type", "application/json")
 

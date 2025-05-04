@@ -29,6 +29,18 @@ func NewTransactionHandler(transctionService service.TransactionService, ctxTime
 	}
 }
 
+// Transaction godoc
+// @Summary Create a new transaction
+// @Description Creates a new transaction for the account, using the provided transaction details.
+// @Tags transactions
+// @Accept  json
+// @Produce  json
+// @Param Authorization header string true "Bearer token"  // Bearer token for authentication
+// @Param request body entity.CreateTransactionReq true "Transaction request body"
+// @Success 200 {object} dto.Response{message=string,data=entity.Transaction} "Transaction created successfully"
+// @Failure 400 {object} dto.ErrorResponse "validation error"
+// @Failure 401 {object} dto.ErrorResponse "Unauthorized"
+// @Router /transaction/create [post]
 func (h *TransactionHandler) CreateTransaction(ctx *gin.Context) {
 	ctx.Header("Content-Type", "application/json")
 
