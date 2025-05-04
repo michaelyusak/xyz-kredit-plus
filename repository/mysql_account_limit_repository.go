@@ -68,3 +68,35 @@ func (r *accountLimitRepositoryMysql) GetAccountLimitByAccountId(ctx context.Con
 	return &accountLimit, nil
 }
 
+func (r *accountLimitRepositoryMysql) UpdateLimit(ctx context.Context, accountLimit entity.AccountLimit) error {
+	var sb strings.Builder
+
+	sb.WriteString(`
+		UPDATE account_limits
+		SET
+			account_limit_1_m = ?
+			account_limit_1_m = ?
+			account_limit_1_m = ?
+			account_limit_1_m = ?
+			updated_at = ?
+		WHERE account_limit_id = ?
+	`)
+
+	q := sb.String()
+
+	now := nowUnixMilli()
+
+	_, err := r.dbtx.ExecContext(ctx, q,
+		accountLimit.Limit1M,
+		accountLimit.Limit2M,
+		accountLimit.Limit3M,
+		accountLimit.Limit4M,
+		accountLimit.Id,
+		now,
+	)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

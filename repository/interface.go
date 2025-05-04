@@ -33,6 +33,7 @@ type MediaRepository interface {
 
 type AccountLimitRepository interface {
 	GetAccountLimitByAccountId(ctx context.Context, accountId int64, forUpdate bool) (*entity.AccountLimit, error)
+	UpdateLimit(ctx context.Context, accountLimit entity.AccountLimit) error
 }
 
 type TransactionRepository interface {
