@@ -6,9 +6,9 @@
         "http://localhost:5173"
     ],
     "mysql": {
-        "username": "root",
+        "username": "mysql",
         "password": "password",
-        "host": "127.0.0.1",
+        "host": "mysql",
         "port": "3306",
         "db_name": "kredit_plus_xyz_db"
     },
@@ -20,6 +20,6 @@
         "hash_cost": 12
     },
     "local_media_storage": {
-        "path": "/assets/"
+        "path": "/app/assets/"
     }
 }
