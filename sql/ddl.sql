@@ -39,3 +39,16 @@ CREATE TABLE refresh_tokens (
     updated_at BIGINT NOT NULL,
     INDEX idx_refresh_token (refresh_token)
 );
+
+CREATE TABLE account_limtis (
+    account_limit_id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    account_id BIGINT NOT NULL,
+    account_limit_1_m FLOAT NOT NULL,
+    account_limit_2_m FLOAT NOT NULL,
+    account_limit_3_m FLOAT NOT NULL,
+    account_limit_4_m FLOAT NOT NULL,
+    created_at BIGINT NOT NULL,
+    updated_at BIGINT NOT NULL,
+    deleted_at BIGINT DEFAULT NULL,
+    INDEX idx_account_limit_account_id (account_id)
+);

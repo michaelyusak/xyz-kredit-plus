@@ -30,3 +30,7 @@ type ConsumerRepository interface {
 type MediaRepository interface {
 	Store(ctx context.Context, media MediaOpt) error
 }
+
+type AccountLimit interface {
+	GetAccountLimitByAccountId(ctx context.Context, accountId int64, forUpdate bool) (*entity.AccountLimit, error)
+}
