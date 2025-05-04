@@ -25,6 +25,7 @@ type RefreshTokenRepository interface {
 
 type ConsumerRepository interface {
 	GetConsumerByAccountId(ctx context.Context, accountId int64, forUpdate bool) (*entity.Consumer, error)
+	InsertConsumer(ctx context.Context, consumerData entity.Consumer) error
 }
 
 type MediaRepository interface {

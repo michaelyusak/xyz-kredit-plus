@@ -23,6 +23,7 @@ type ServiceConfig struct {
 	Jwt               helper.JwtConfig   `json:"jwt"`
 	Hash              helper.HashConfig  `json:"hash"`
 	LocalMediaStorage LocalStorageConfig `json:"local_media_storage"`
+	IsEnableSeeding   bool               `json:"is_enable_seeding"`
 }
 
 func Init(log *logrus.Logger) ServiceConfig {

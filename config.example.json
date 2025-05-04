@@ -5,6 +5,7 @@
     "allowed_origins": [
         "http://localhost:5173"
     ],
+    "is_enable_seeding": false,
     "mysql": {
         "username": "mysql",
         "password": "password",

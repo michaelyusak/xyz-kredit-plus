@@ -13,6 +13,7 @@ import (
 	hMiddleware "github.com/michaelyusak/go-helper/middleware"
 	"github.com/michaelyusak/xyz-kredit-plus/config"
 	"github.com/michaelyusak/xyz-kredit-plus/handler"
+	"github.com/michaelyusak/xyz-kredit-plus/helper"
 	"github.com/michaelyusak/xyz-kredit-plus/middleware"
 	"github.com/michaelyusak/xyz-kredit-plus/repository"
 	"github.com/michaelyusak/xyz-kredit-plus/service"
@@ -36,6 +37,15 @@ func createRouter(config config.ServiceConfig, log *logrus.Logger) *gin.Engine {
 	mysql, err := hAdaptor.ConnectDB(hAdaptor.MYSQL, config.MySQL)
 	if err != nil {
 		panic(fmt.Errorf("[server][createRouter][hAdaptor.ConnectDB] error: %w", err))
+	}
+
+	if config.IsEnableSeeding {
+		log.Info("[server][createRouter] seeding is enabled")
+
+		err = helper.Seed(mysql)
+		if err != nil {
+			panic(fmt.Errorf("[server][helper.Seed] Error: %w", err))
+		}
 	}
 
 	transaction := repository.NewSqlTransaction(mysql)
