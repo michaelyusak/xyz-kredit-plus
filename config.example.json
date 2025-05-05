@@ -22,5 +22,6 @@
     },
     "local_media_storage": {
         "path": "/app/assets/"
-    }
+    },
+    "is_enable_seeding": true
 }
